@@ -7,7 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Đăng ký DI cho IProductRepository
 builder.Services.AddScoped<IProductRepository, FakeProductRepository>();
 
-// Add services to the container.
+// Thêm các dịch vụ vào container.
 builder.Services.AddControllersWithViews();
 // builder.Logging.AddConsole();
 // builder.Logging.AddDebug();
@@ -20,15 +20,15 @@ builder.Services.AddSession(options =>{
 });
 var app = builder.Build();
 
-//Hiện lỗi để sửa:
+// Hiện thông tin debug để sửa lỗi (bật khi cần)
 // Console.WriteLine("FakeProductRepository: " + typeof(SportsStoreWebApp.Concrete.FakeProductRepository).FullName);
 
 
-// Configure the HTTP request pipeline.
+// Cấu hình pipeline xử lý HTTP request.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+    // Giá trị HSTS mặc định là 30 ngày. Có thể thay đổi cho môi trường production, xem https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 app.UseMiddleware<SportsStoreWebApp.Middleware.RequestLoggerMiddleware>();

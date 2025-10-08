@@ -17,21 +17,27 @@ namespace SportsStoreWebApp.Controllers
             _repository = repo;
             _logger = logger;
         }
-        public IActionResult AddToCart(int productId, string returnUrl)
+        [HttpPost]
+        public IActionResult AddToCart([FromForm]int? productId, [FromForm] string? returnUrl)
         {
-            Product? product = _repository.Products.FirstOrDefault(p => p.ProductID == productId);
+            // cho phép lấy giá trị từ querystring nếu form không gửi các trường này
+            int id = productId ?? (int.TryParse(Request.Query["productId"], out var qid) ? qid : 0);
+            string? ret = returnUrl ?? Request.Query["returnUrl"].ToString();
+            Product? product = _repository.Products.FirstOrDefault(p => p.ProductID == id);
             if (product != null)
             {
                 Cart cart = HttpContext.Session.GetObjectFromJson<Cart>("Cart") ?? new Cart();
                 cart.AddItem(product, 1); // Thêm 1 sản phẩm
-                HttpContext.Session.SetObjectAsJson("Cart", cart); // Lưu lại giỏ hàng vào Session
+                HttpContext.Session.SetObjectAsJson("Cart", cart); // Lưu giỏ hàng vào Session
                 _logger.LogInformation("Added product {ProductName} (ID:{ProductID}) to cart. Total items in cart: {TotalItems}", product.Name, product.ProductID, cart.Lines.Sum(i => i.Quantity));
+                // Đặt thông báo tạm (TempData) để hiển thị sau khi chuyển hướng
+                TempData["CartMessage"] = $"Đã thêm '{product.Name}' vào giỏ hàng. Tổng số lượng hiện có: {cart.Lines.Sum(i => i.Quantity)}";
             }
             else 
             {
                 _logger.LogWarning("Attempted to add non-existent product with ID {ProductID} to cart.", productId);
             }
-            return Redirect(returnUrl ?? "/");
+            return Redirect(ret ?? "/");
         }
         public IActionResult Index(string returnUrl)
         {

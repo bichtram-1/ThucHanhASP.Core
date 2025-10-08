@@ -27,6 +27,15 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-controller="Product" asp-action="List">Sản phẩm</a>
+                        </li>
+                    </ul>
+
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item">
+                            <a class="btn btn-outline-primary" asp-controller="Cart" asp-action="Index">🛒 Giỏ hàng</a>
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -34,6 +43,14 @@
     </header>
     <div class="container">
         <main role="main" class="pb-3">
+            @* Flash message from TempData (one-time) *@
+            @if (TempData["CartMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    @TempData["CartMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
             @RenderBody()
         </main>
     </div>

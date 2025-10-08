@@ -34,9 +34,9 @@ namespace SportsStoreWebApp.Controllers
         }
 
         // POST: Product/Edit
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult Edit(Product product)
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public IActionResult Edit([FromForm] Product product)
         {
             if (ModelState.IsValid)
             {
@@ -53,11 +53,30 @@ namespace SportsStoreWebApp.Controllers
         }
 
         // GET: Product/List
-        public IActionResult List(string? category = null)
+    // Nhận category và productPage từ QueryString hoặc Route data
+        public IActionResult List([FromQuery] string? category = null, [FromQuery(Name = "productPage")] int productPage = 1, [FromQuery(Name = "itemsPerPage")] int itemsPerPage = 3)
         {
-            var products = _repository.Products.Where(p => category == null || p.Category == category).ToList();
+            // các biến phân trang đơn giản (có thể cải thiện bằng dịch vụ phân trang)
+            if (itemsPerPage < 1) itemsPerPage = 3; // safe default
+
+            // Chuẩn hóa category: coi chuỗi rỗng hoặc whitespace như không có category (null)
+            if (string.IsNullOrWhiteSpace(category))
+            {
+                category = null;
+            }
+
+            // Đảm bảo productPage hợp lệ
+            if (productPage < 1) productPage = 1;
+
+            var filtered = _repository.Products.Where(p => category == null || p.Category == category);
+            var products = filtered.Skip((productPage - 1) * itemsPerPage).Take(itemsPerPage).ToList();
+
             ViewBag.CurrentCategory = category ?? "Tất cả sản phẩm";
             ViewBag.Message = TempData["message"];
+            ViewBag.CurrentPage = productPage;
+            ViewBag.ItemsPerPage = itemsPerPage;
+            ViewBag.TotalItems = filtered.Count();
+
             return View(products);
         }
 
@@ -97,16 +116,68 @@ namespace SportsStoreWebApp.Controllers
             }
             return View(product);
         }
+        
+    // GET: Product/Filter - bind từ query string
+        [HttpGet]
+        public IActionResult FilterProducts([FromQuery] ProductFilter filter)
+        {
+            _logger.LogInformation("Lọc sản phẩm theo Category: {Category}, MinPrice: {MinPrice}, MaxPrice: {MaxPrice}, InStockOnly: {InStock}",
+                filter.Category, filter.MinPrice, filter.MaxPrice, filter.InStockOnly);
+
+            var results = ApplyFilter(filter);
+            return View("List", results);
+        }
+
+    // POST: Product/Filter - bind từ form
+    // Đổi tên phương thức để tránh trùng chữ ký nhưng vẫn giữ tên action cho routing/forms
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [ActionName("FilterProducts")]
+        public IActionResult FilterProductsPost([FromForm] ProductFilter filter)
+        {
+            // Reuse the same helper used by the GET action
+            var results = ApplyFilter(filter);
+            return View("List", results);
+        }
+
+    // Hàm helper dùng chung để lọc sản phẩm
+        private List<Product> ApplyFilter(ProductFilter filter)
+        {
+            var filteredProducts = _repository.Products.AsQueryable();
+            if (!string.IsNullOrEmpty(filter.Category))
+            {
+                filteredProducts = filteredProducts.Where(p => p.Category == filter.Category);
+            }
+            if (filter.MinPrice.HasValue)
+            {
+                filteredProducts = filteredProducts.Where(p => p.Price >= filter.MinPrice.Value);
+            }
+            if (filter.MaxPrice.HasValue)
+            {
+                filteredProducts = filteredProducts.Where(p => p.Price <= filter.MaxPrice.Value);
+            }
+            if (filter.InStockOnly)
+            {
+                // Nếu model Product có thuộc tính InStock, có thể lọc tại đây.
+                // Ví dụ: filteredProducts = filteredProducts.Where(p => p.InStock > 0);
+            }
+
+            return filteredProducts.ToList();
+        }
          [HttpPost]
+        [ValidateAntiForgeryToken]
         public IActionResult Delete(int productId)
         {
-            Product? productToDelete= _repository.Products.FirstOrDefault(p => p.ProductID==productId);
-            if(productToDelete!=null)
+            var productToDelete = _repository.Products.FirstOrDefault(p => p.ProductID == productId);
+            if (productToDelete != null)
             {
-                TempData["message"]=$"{productToDelete.Name} Đã được xóa!";
+                // gọi repository để xóa
+                _repository.DeleteProduct(productId);
+                TempData["message"] = $"{productToDelete.Name} đã được xóa!";
             }
-            else{
-                TempData["message"]=$"SẢn phẩm có ID{productId} không tồn tại để xóa!";
+            else
+            {
+                TempData["message"] = $"Sản phẩm có ID {productId} không tồn tại để xóa!";
             }
             return RedirectToAction("List");
         }

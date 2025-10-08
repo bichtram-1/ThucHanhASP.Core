@@ -6,6 +6,7 @@
 <h1>Chỉnh sửa sản phẩm</h1>
 
 <form asp-action="Edit" method="post">
+    @Html.AntiForgeryToken()
     <div asp-validation-summary="All" class="text-danger"></div>
     <input type="hidden" asp-for="ProductID" />
 
@@ -44,3 +45,6 @@
         <a asp-action="List" class="btn btn-secondary">Hủy</a>
     </div>
 </form>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
