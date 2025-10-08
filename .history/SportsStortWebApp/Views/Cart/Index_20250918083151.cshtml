@@ -1,0 +1,28 @@
+@model SportsStore.Domain.Models.cart 
+@{
+    ViewData["Title"]="giỏ hàng của bạn";
+
+}
+
+<h1>Giỏ hàng của bạn</h1>
+<table class="table table-bordered table-striped">
+ <thead>
+ <tr>
+ <th>Số lượng</th>
+ <th>Sản phẩm</th>
+ <th class="text-right">Giá</th>
+ <th class="text-right">Tổng cộng</th>
+ <th></th>
+ </tr>
+ </thead>
+<tbody>
+@foreach (var line in Model.Lines)
+{
+<tr>
+<td class="text-center">@line.Quantity</td>
+<td class=text-left">@line.P
+}
+
+
+
+ 

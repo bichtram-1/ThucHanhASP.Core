@@ -1,0 +1,11 @@
+@using SportsStore.Domain.Models
+@model IEnumerable<Product>
+@{
+ViewData["Title"] = "Danh sách sản phẩm";
+}
+<h1>Danh sách sản phẩm - @ViewBag.CurrentCategory</h1>
+@if (Model != null && Model.Any())
+{
+<table class="table table-bordered table-striped">
+<thead>
+<tr>
